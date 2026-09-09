@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('opens on the Brest conductivity walk', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Sensoil/);
-  await expect(page.getByRole('heading', { name: 'Remparts to Capucins' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Stangalar soil loop' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Conductivity', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('1,482')).toBeVisible();
   await expect(page.getByRole('button', { name: /One reading needs attention/ })).toBeVisible();

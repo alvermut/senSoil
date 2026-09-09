@@ -44,7 +44,7 @@ const ranges: Record<ScenarioKey, Record<MetricKey, [number, number]>> = {
   walk: {
     temperature: [13, 18],
     moisture: [18, 50],
-    conductivity: [0.1, 3],
+    conductivity: [0.18, 0.92],
   },
   farm: {
     temperature: [10, 32],
@@ -116,7 +116,8 @@ function metricColor(measurement: Measurement): string {
 
 const baseStyles = {
   water: new Style({ fill: new Fill({ color: '#c9dddc' }), stroke: new Stroke({ color: '#9ebdbe', width: 1 }) }),
-  field: new Style({ fill: new Fill({ color: 'rgba(201, 179, 107, 0.27)' }), stroke: new Stroke({ color: 'rgba(126, 118, 70, 0.35)', width: 1 }) }),
+  field: new Style({ fill: new Fill({ color: 'rgba(201, 179, 107, 0.2)' }), stroke: new Stroke({ color: 'rgba(126, 118, 70, 0.3)', width: 0.8 }) }),
+  'survey-field': new Style({ fill: new Fill({ color: 'rgba(201, 179, 107, 0.43)' }), stroke: new Stroke({ color: 'rgba(91, 91, 49, 0.68)', width: 1.5 }) }),
   block: new Style({ fill: new Fill({ color: 'rgba(202, 216, 212, 0.65)' }), stroke: new Stroke({ color: 'rgba(114, 137, 137, 0.24)', width: 0.8 }) }),
   park: new Style({ fill: new Fill({ color: 'rgba(177, 207, 186, 0.52)' }), stroke: new Stroke({ color: 'rgba(83, 130, 101, 0.2)', width: 0.8 }) }),
   primary: [
@@ -184,16 +185,41 @@ function sampleStyle(feature: FeatureLike): Style {
   return style;
 }
 
+const routeStyleCache = new globalThis.Map<string, Style[]>();
+
+function routeStyle(feature: FeatureLike): Style[] {
+  const measurement = feature.get('measurement') as Measurement;
+  const color = metricColor(measurement);
+  const key = `${scenario}-${color}`;
+  const existing = routeStyleCache.get(key);
+  if (existing) return existing;
+
+  const styles = [
+    new Style({
+      stroke: new Stroke({
+        color: 'rgba(243,248,247,.94)',
+        width: scenario === 'walk' ? 9 : 6.5,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }),
+      zIndex: 4,
+    }),
+    new Style({
+      stroke: new Stroke({
+        color,
+        width: scenario === 'walk' ? 5.4 : 3.8,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }),
+      zIndex: 5,
+    }),
+  ];
+  routeStyleCache.set(key, styles);
+  return styles;
+}
+
 const baseLayer = new VectorLayer({ source: baseSource, style: baseStyle, updateWhileInteracting: false });
-const routeLayer = new VectorLayer({
-  source: routeSource,
-  style: () => scenario === 'walk'
-    ? [
-        new Style({ stroke: new Stroke({ color: 'rgba(243,248,247,.94)', width: 8 }) }),
-        new Style({ stroke: new Stroke({ color: 'rgba(32,52,59,.48)', width: 2.2 }) }),
-      ]
-    : new Style({ stroke: new Stroke({ color: 'rgba(32,52,59,.35)', width: 1.2, lineDash: [3, 5] }) }),
-});
+const routeLayer = new VectorLayer({ source: routeSource, style: routeStyle, updateWhileAnimating: true });
 const sampleLayer = new VectorLayer({ source: sampleSource, style: sampleStyle, updateWhileAnimating: true });
 const labelLayer = new VectorLayer({ source: labelSource, style: labelStyle, declutter: true });
 
@@ -246,9 +272,24 @@ function setMeasurements(points: Measurement[]): void {
   sampleSource.addFeatures(points.map(featureFromMeasurement));
 }
 
-function setRoute(coordinates: [number, number][]): void {
+function setRoute(points: Measurement[]): void {
   routeSource.clear();
-  routeSource.addFeature(new Feature(new LineString(coordinates.map((coordinate) => fromLonLat(coordinate)))));
+  routeStyleCache.clear();
+  const segments = points.slice(0, -1).map((point, index) => {
+    const next = points[index + 1];
+    const feature = new Feature(new LineString([
+      fromLonLat(point.coordinate),
+      fromLonLat(next.coordinate),
+    ]));
+    feature.set('measurement', {
+      ...point,
+      temperature: (point.temperature + next.temperature) / 2,
+      moisture: (point.moisture + next.moisture) / 2,
+      conductivity: (point.conductivity + next.conductivity) / 2,
+    } satisfies Measurement);
+    return feature;
+  });
+  routeSource.addFeatures(segments);
 }
 
 function fitScene(duration = 0): void {
@@ -377,7 +418,7 @@ async function setFarmSurvey(index: number, crossfade = false): Promise<void> {
   currentSurveyIndex = safeIndex;
   const survey = farmSurveys[currentSurveyIndex];
   setMeasurements(survey.points);
-  setRoute(survey.points.map((point) => point.coordinate));
+  setRoute(survey.points);
   element<HTMLInputElement>('#timeline').value = String(currentSurveyIndex);
   element<HTMLInputElement>('#timeline').setAttribute('aria-valuetext', survey.label);
   updateTrend();
@@ -420,7 +461,9 @@ async function startPlayback(): Promise<void> {
 function setMetric(metric: MetricKey): void {
   activeMetric = metric;
   sampleStyleCache.clear();
+  routeStyleCache.clear();
   sampleLayer.changed();
+  routeLayer.changed();
   updateLegend();
   if (scenario === 'farm') updateTrend();
 }
@@ -437,7 +480,7 @@ function renderScene(nextScenario: ScenarioKey): void {
 
   if (scenario === 'walk') {
     setMeasurements(walkMeasurements);
-    setRoute(brestRoute);
+    setRoute(walkMeasurements);
     const start = new Feature(new Point(fromLonLat(brestRoute[0])));
     start.set('endpoint', 'start');
     const finish = new Feature(new Point(fromLonLat(brestRoute[brestRoute.length - 1])));
@@ -446,7 +489,7 @@ function renderScene(nextScenario: ScenarioKey): void {
     anomalyOverlay.setPosition(fromLonLat(walkMeasurements[WALK_ANOMALY_INDEX].coordinate));
     anomalyElement.hidden = false;
     element('#scene-place').textContent = 'Brest, France';
-    element('#scene-title').textContent = 'Remparts to Capucins';
+    element('#scene-title').textContent = 'Stangalar soil loop';
     element('#walk-panel').hidden = false;
     element('#farm-panel').hidden = true;
   } else {

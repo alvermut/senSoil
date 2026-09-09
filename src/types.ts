@@ -31,7 +31,7 @@ export interface MapLine {
 
 export interface MapPolygon {
   coordinates: Coordinate[];
-  kind: 'water' | 'field' | 'block' | 'park';
+  kind: 'water' | 'field' | 'survey-field' | 'block' | 'park';
 }
 
 export interface SceneGeometry {

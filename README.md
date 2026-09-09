@@ -1,6 +1,6 @@
 # Sensoil map demo
 
-A self-contained, map-first product demonstration for step-level soil sensing. It includes a walking survey through Brest and a two-year farm survey in l’Horta Nord, Valencia.
+A self-contained, map-first product demonstration for step-level soil sensing. It includes a 1.46 km walking survey around Vallon du Stangalar in Brest and a two-year farm survey on a mapped parcel in l’Horta Nord, Valencia.
 
 ## Local development
 
@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-The maps, route geometry, measurement data, font, and icons are bundled locally. The built application makes no runtime requests to map, data, or font services.
+The maps use embedded OpenStreetMap vector geometry; route geometry, measurement data, font, and icons are bundled locally. The built application makes no runtime requests to map, data, or font services.
 
 ## Quality checks
 
