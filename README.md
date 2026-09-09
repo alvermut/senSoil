@@ -23,21 +23,22 @@ npm run test:e2e
 
 `npm run test:e2e` uses the installed Chrome channel. The Vite preview server is started automatically.
 
-## Cloudflare Pages
+## Cloudflare Workers Static Assets
 
-The repository includes `wrangler.jsonc` with `pages_build_output_dir` set to `./dist`. Deploy directly after authenticating Wrangler:
+The repository includes `wrangler.jsonc` with its static asset directory set to `./dist`. Deploy directly after authenticating Wrangler:
 
 ```bash
 npm run deploy
 ```
 
-For Git-based Cloudflare Pages deployment, connect the repository with:
+For Git-based Cloudflare Workers Builds deployment, connect the repository with:
 
 - Production branch: `main`
+- Root path: `/`
 - Build command: `npm run build`
-- Build output directory: `dist`
+- Deploy command: `npx wrangler deploy`
 
-Vite uses `base: './'`, so the same build works at a hostname root or under a subpath. The demo is public and does not require Cloudflare Access or server-side bindings.
+Vite uses `base: './'`, so the same build works at a hostname root or under a subpath. The demo is deployed as static assets and does not require server-side bindings.
 
 ## Data and attribution
 
