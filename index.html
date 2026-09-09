@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#f3f8f7" />
     <meta
       name="description"
-      content="Sensoil field measurements mapped step by step in Brest and Valencia."
+      content="senStep field measurements mapped step by step in Brest and Valencia."
     />
-    <title>Sensoil — ground scan</title>
+    <title>senStep — ground scan</title>
   </head>
   <body>
-    <div id="app" class="app-shell">
+    <div id="app" class="app-shell" data-active-scenario="walk">
       <header class="topbar">
-        <a class="wordmark" href="#" aria-label="Sensoil home">sensoil</a>
+        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-mark.png" alt="" /><span>senStep</span></a>
         <nav class="scenario-tabs" aria-label="Choose map scenario">
           <button class="scenario-tab is-active" type="button" data-scenario="walk" aria-pressed="true">
             Walk
@@ -49,9 +49,13 @@
 
           <div class="layer-console">
             <div class="metric-tabs" role="group" aria-label="Measurement layer">
-              <button type="button" data-metric="temperature">Temperature</button>
-              <button type="button" data-metric="moisture">Moisture</button>
+              <button type="button" data-metric="temperature">Weather</button>
+              <button type="button" data-metric="moisture">Humidity</button>
               <button class="is-active" type="button" data-metric="conductivity">Conductivity</button>
+            </div>
+            <div class="mode-caption" aria-live="polite">
+              <strong id="mode-context">Electrical conductivity</strong>
+              <span id="mode-detail">Step-by-step soil readings</span>
             </div>
             <div class="legend-row">
               <span id="legend-low">0.18</span>
@@ -111,6 +115,23 @@
                 <div class="timeline-ends"><span>Sep ’24</span><span>Sep ’26</span></div>
               </div>
             </div>
+
+            <section class="calibration-panel" aria-labelledby="calibration-title">
+              <div class="calibration-heading">
+                <div>
+                  <p>Living-lab calibration</p>
+                  <h2 id="calibration-title">NEMESIS-inspired field protocol</h2>
+                </div>
+                <span id="calibration-status"><i aria-hidden="true"></i>Within range</span>
+              </div>
+              <dl class="calibration-values">
+                <div><dt>Ambient</dt><dd id="calibration-ambient">Clear and dry, 24.6 °C</dd></div>
+                <div><dt>Air humidity</dt><dd id="calibration-humidity">54% RH</dd></div>
+                <div><dt>EC reference</dt><dd id="calibration-conductivity">1.41 dS/m</dd></div>
+                <div><dt>Soil state</dt><dd id="calibration-soil">Dry surface</dd></div>
+              </dl>
+              <small>Illustrative calibration conditions; no project affiliation.</small>
+            </section>
           </section>
 
           <section id="sample-sheet" class="sample-sheet" hidden aria-live="polite">
@@ -119,8 +140,8 @@
               <button id="close-sheet" type="button" aria-label="Close sample details">×</button>
             </div>
             <dl class="sample-values">
-              <div><dt>Temperature</dt><dd id="sample-temperature">—</dd></div>
-              <div><dt>Moisture</dt><dd id="sample-moisture">—</dd></div>
+              <div><dt>Weather</dt><dd id="sample-temperature">—</dd></div>
+              <div><dt>Soil humidity</dt><dd id="sample-moisture">—</dd></div>
               <div><dt>Conductivity</dt><dd id="sample-conductivity">—</dd></div>
             </dl>
             <p id="sample-alert" class="sample-alert" hidden>

@@ -141,6 +141,15 @@ export function createFarmSurveys(): FarmSurvey[] {
   const seasonalTemperature = [24.6, 14.2, 17.1, 27.3, 25.1, 14.7, 17.8, 28.0, 24.4];
   const generalMoisture = [18.5, 20.7, 24.1, 18.2, 20.4, 22.6, 25.0, 21.3, 24.2];
   const recoveringZone = [11.2, 13.0, 15.4, 18.0, 20.8, 23.1, 25.9, 28.7, 31.0];
+  const calibrationWeather = [
+    'Clear and dry', 'Cloudy', 'Broken cloud', 'Clear and hot', 'Clear and dry',
+    'Light rain', 'Overcast', 'Clear and hot', 'Light cloud',
+  ];
+  const calibrationHumidity = [54, 76, 67, 43, 57, 80, 72, 46, 61];
+  const calibrationSoilState = [
+    'Dry surface', 'Field-moist', 'Field-moist', 'Dry surface', 'Moderately dry',
+    'Wet surface', 'Field-moist', 'Dry surface', 'Field-moist',
+  ];
 
   return surveyDates.map(([date, label], surveyIndex) => {
     const random = mulberry32(8_400 + surveyIndex * 137);
@@ -167,7 +176,19 @@ export function createFarmSurveys(): FarmSurvey[] {
       }
     }
 
-    return { date, label, points };
+    return {
+      date,
+      label,
+      points,
+      calibration: {
+        weather: calibrationWeather[surveyIndex],
+        ambientTemperature: seasonalTemperature[surveyIndex],
+        relativeHumidity: calibrationHumidity[surveyIndex],
+        referenceConductivity: 1.41,
+        soilState: calibrationSoilState[surveyIndex],
+        status: 'Within range',
+      },
+    };
   });
 }
 

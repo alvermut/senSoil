@@ -21,6 +21,14 @@ export interface FarmSurvey {
   date: string;
   label: string;
   points: Measurement[];
+  calibration: {
+    weather: string;
+    ambientTemperature: number;
+    relativeHumidity: number;
+    referenceConductivity: number;
+    soilState: string;
+    status: 'Within range';
+  };
 }
 
 export interface MapLine {

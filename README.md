@@ -1,6 +1,6 @@
-# Sensoil map demo
+# senStep map demo
 
-A self-contained, map-first product demonstration for step-level soil sensing. It includes a 1.46 km walking survey around Vallon du Stangalar in Brest and a two-year farm survey on a mapped parcel in l’Horta Nord, Valencia.
+A self-contained, map-first product demonstration for step-level soil sensing. It includes a 1.46 km walking survey around Vallon du Stangalar in Brest and a two-year farm survey on a mapped parcel in l’Horta Nord, Valencia. Weather, soil humidity, and conductivity modes share the same step-level map, while the farm timeline includes illustrative NEMESIS-inspired calibration conditions.
 
 ## Local development
 

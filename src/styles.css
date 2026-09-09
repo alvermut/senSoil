@@ -94,22 +94,24 @@ button {
 
 .wordmark {
   align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--ink);
-  font-size: 1.26rem;
-  font-weight: 700;
-  letter-spacing: -0.065em;
   line-height: 1;
   text-decoration: none;
 }
 
-.wordmark::after {
-  content: '';
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  margin-left: 2px;
-  border-radius: 50%;
-  background: var(--atlantic);
+.wordmark img {
+  width: 35px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.wordmark span {
+  font-size: 1.26rem;
+  font-weight: 700;
+  letter-spacing: -0.065em;
 }
 
 .scenario-tabs {
@@ -301,6 +303,29 @@ button {
 
 .metric-tabs button.is-active::after {
   background: var(--ink);
+}
+
+.mode-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: 0.6rem;
+}
+
+.mode-caption strong {
+  color: var(--ink);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.mode-caption span {
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .legend-row {
@@ -682,6 +707,83 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+.calibration-panel {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.calibration-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.calibration-heading p {
+  margin: 0 0 2px;
+  color: var(--muted);
+  font-size: 0.59rem;
+}
+
+.calibration-heading h2 {
+  margin: 0;
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+#calibration-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  color: #2f7057;
+  font-size: 0.59rem;
+  font-weight: 600;
+}
+
+#calibration-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3b9b75;
+  box-shadow: 0 0 0 3px rgba(59, 155, 117, 0.14);
+}
+
+.calibration-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 11px 0 0;
+}
+
+.calibration-values div:nth-child(even) {
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+}
+
+.calibration-values dt {
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+
+.calibration-values dd {
+  margin: 2px 0 0;
+  overflow: hidden;
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calibration-panel > small {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.53rem;
+}
+
 .sample-sheet {
   position: absolute;
   z-index: 10;
@@ -784,6 +886,12 @@ button {
   }
 }
 
+@media (max-width: 899px) {
+  .app-shell[data-active-scenario='farm'] .workspace {
+    grid-template-rows: minmax(300px, 1fr) 330px;
+  }
+}
+
 @media (min-width: 900px) {
   .app-shell {
     grid-template-rows: 72px minmax(0, 1fr);
@@ -794,7 +902,7 @@ button {
     padding-left: 34px;
   }
 
-  .wordmark {
+  .wordmark span {
     font-size: 1.45rem;
   }
 
@@ -882,6 +990,21 @@ button {
 
   .timeline-controls {
     margin-top: 20px;
+  }
+
+  .calibration-panel {
+    margin-top: 28px;
+    padding-top: 20px;
+  }
+
+  .calibration-values {
+    gap: 15px 20px;
+    margin-top: 18px;
+  }
+
+  .calibration-heading h2,
+  .calibration-values dd {
+    font-size: 0.76rem;
   }
 
   .sample-sheet {

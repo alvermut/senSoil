@@ -36,7 +36,7 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const metricMeta: Record<MetricKey, { label: string; unit: string; decimals: number }> = {
   temperature: { label: 'Temperature', unit: '°C', decimals: 1 },
-  moisture: { label: 'Moisture', unit: '%', decimals: 1 },
+  moisture: { label: 'Soil humidity', unit: '%', decimals: 1 },
   conductivity: { label: 'Conductivity', unit: 'dS/m', decimals: 2 },
 };
 
@@ -320,6 +320,28 @@ function average(survey: FarmSurvey, metric: MetricKey): number {
   return survey.points.reduce((sum, point) => sum + point[metric], 0) / survey.points.length;
 }
 
+function updateModeCaption(): void {
+  const context = element('#mode-context');
+  const detail = element('#mode-detail');
+
+  if (activeMetric === 'temperature') {
+    if (scenario === 'walk') {
+      context.textContent = 'Overcast, 14.8 °C air';
+      detail.textContent = 'Mapped by surface temperature';
+    } else {
+      const calibration = farmSurveys[currentSurveyIndex].calibration;
+      context.textContent = `${calibration.weather}, ${calibration.ambientTemperature.toFixed(1)} °C air`;
+      detail.textContent = 'Mapped by surface temperature';
+    }
+  } else if (activeMetric === 'moisture') {
+    context.textContent = 'Soil humidity';
+    detail.textContent = 'Volumetric estimate at each sample';
+  } else {
+    context.textContent = 'Electrical conductivity';
+    detail.textContent = 'Salinity response at each sample';
+  }
+}
+
 function updateLegend(): void {
   const [minimum, maximum] = ranges[scenario][activeMetric];
   const meta = metricMeta[activeMetric];
@@ -333,6 +355,7 @@ function updateLegend(): void {
     button.classList.toggle('is-active', isActive);
     button.setAttribute('aria-pressed', String(isActive));
   });
+  updateModeCaption();
 }
 
 function updateTrend(): void {
@@ -363,6 +386,14 @@ function updateTrend(): void {
   element('#farm-average').textContent = formatMeasurement(average(survey, activeMetric), activeMetric);
   element('#farm-average-label').textContent = `Average ${metricMeta[activeMetric].label.toLowerCase()}`;
   svgElement('#trend-chart').setAttribute('aria-label', `${metricMeta[activeMetric].label} average across nine surveys`);
+
+  const calibration = survey.calibration;
+  element('#calibration-ambient').textContent = `${calibration.weather}, ${calibration.ambientTemperature.toFixed(1)} °C`;
+  element('#calibration-humidity').textContent = `${calibration.relativeHumidity}% RH`;
+  element('#calibration-conductivity').textContent = `${calibration.referenceConductivity.toFixed(2)} dS/m`;
+  element('#calibration-soil').textContent = calibration.soilState;
+  element('#calibration-status').lastChild!.textContent = calibration.status;
+  updateModeCaption();
 }
 
 function openMeasurement(measurement: Measurement): void {
@@ -472,6 +503,7 @@ function renderScene(nextScenario: ScenarioKey): void {
   stopPlayback();
   closeMeasurement();
   scenario = nextScenario;
+  element('#app').dataset.activeScenario = scenario;
   activeMetric = scenario === 'walk' ? 'conductivity' : 'moisture';
   currentSurveyIndex = 0;
   transitionSequence += 1;

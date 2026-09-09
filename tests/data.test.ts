@@ -41,6 +41,8 @@ describe('Valencia farm data', () => {
     expect(surveys[0].date).toBe('2024-09-01');
     expect(surveys.at(-1)?.date).toBe('2026-09-01');
     expect(surveys.every((survey) => survey.points.length === 120)).toBe(true);
+    expect(surveys.every((survey) => survey.calibration.referenceConductivity === 1.41)).toBe(true);
+    expect(surveys.every((survey) => survey.calibration.status === 'Within range')).toBe(true);
   });
 
   it('uses different sampling positions for each visit', () => {
