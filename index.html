@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f3f8f7" />
+    <meta
+      name="description"
+      content="Sensoil field measurements mapped step by step in Brest and Valencia."
+    />
+    <title>Sensoil — ground scan</title>
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <header class="topbar">
+        <a class="wordmark" href="#" aria-label="Sensoil home">sensoil</a>
+        <nav class="scenario-tabs" aria-label="Choose map scenario">
+          <button class="scenario-tab is-active" type="button" data-scenario="walk" aria-pressed="true">
+            Walk
+          </button>
+          <button class="scenario-tab" type="button" data-scenario="farm" aria-pressed="false">
+            Farm
+          </button>
+        </nav>
+      </header>
+
+      <main class="workspace">
+        <section class="map-stage" aria-labelledby="scene-title">
+          <div id="map" class="map" role="application" tabindex="0" aria-label="Interactive soil measurement map"></div>
+
+          <div class="scene-heading">
+            <p id="scene-place" class="scene-place">Brest, France</p>
+            <h1 id="scene-title">Remparts to Capucins</h1>
+          </div>
+
+          <div class="map-actions" aria-label="Map controls">
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="reset-map" type="button" aria-label="Reset map view">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7.5A8 8 0 1 1 4 14M5 7.5V3m0 4.5h4.5" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="anomaly-marker" class="anomaly-marker">
+            <button type="button" aria-label="Inspect conductivity anomaly">!</button>
+          </div>
+
+          <div class="layer-console">
+            <div class="metric-tabs" role="group" aria-label="Measurement layer">
+              <button type="button" data-metric="temperature">Temperature</button>
+              <button type="button" data-metric="moisture">Moisture</button>
+              <button class="is-active" type="button" data-metric="conductivity">Conductivity</button>
+            </div>
+            <div class="legend-row">
+              <span id="legend-low">0.1</span>
+              <div id="legend-ramp" class="legend-ramp conductivity" aria-hidden="true"></div>
+              <span id="legend-high">3.0 dS/m</span>
+            </div>
+          </div>
+        </section>
+
+        <aside class="inspector" aria-label="Survey information">
+          <section id="walk-panel" class="scenario-panel">
+            <div class="route-pair">
+              <div>
+                <span class="route-dot start"></span>
+                <p>Start</p>
+                <strong>Remparts de Brest</strong>
+              </div>
+              <span class="route-connector" aria-hidden="true"></span>
+              <div>
+                <span class="route-dot finish"></span>
+                <p>Finish</p>
+                <strong>Ateliers des Capucins</strong>
+              </div>
+            </div>
+            <dl class="route-stats">
+              <div><dt>Distance</dt><dd>1.14 km</dd></div>
+              <div><dt>Elapsed</dt><dd>18 min</dd></div>
+              <div><dt>Samples</dt><dd>1,482</dd></div>
+            </dl>
+            <button id="anomaly-summary" class="anomaly-summary" type="button">
+              <span class="alert-sign">!</span>
+              <span><strong>One reading needs attention</strong><small>Conductivity exceeds the route baseline</small></span>
+            </button>
+          </section>
+
+          <section id="farm-panel" class="scenario-panel" hidden>
+            <div class="farm-summary">
+              <div>
+                <p id="survey-date">September 2024</p>
+                <strong id="farm-average">18.7%</strong>
+              </div>
+              <span id="farm-average-label">Average moisture</span>
+            </div>
+            <svg id="trend-chart" class="trend-chart" viewBox="0 0 320 58" role="img" aria-label="Moisture average across nine surveys">
+              <path class="trend-baseline" d="M4 48H316" />
+              <polyline id="trend-line" points="" />
+              <g id="trend-points"></g>
+            </svg>
+            <div class="timeline-controls">
+              <button id="play-timeline" class="play-button" type="button" aria-label="Play farm timeline">
+                <svg class="play-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 7 5-7 5Z" /></svg>
+                <svg class="pause-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M6.5 5h2.5v10H6.5zm4.5 0h2.5v10H11z" /></svg>
+              </button>
+              <div class="timeline-track">
+                <input id="timeline" type="range" min="0" max="8" step="1" value="0" aria-label="Farm survey date" />
+                <div id="timeline-ticks" class="timeline-ticks" aria-hidden="true"></div>
+                <div class="timeline-ends"><span>Sep ’24</span><span>Sep ’26</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="sample-sheet" class="sample-sheet" hidden aria-live="polite">
+            <div class="sample-sheet-heading">
+              <div><p id="sample-context">Walk sample</p><h2 id="sample-title">Step 1</h2></div>
+              <button id="close-sheet" type="button" aria-label="Close sample details">×</button>
+            </div>
+            <dl class="sample-values">
+              <div><dt>Temperature</dt><dd id="sample-temperature">—</dd></div>
+              <div><dt>Moisture</dt><dd id="sample-moisture">—</dd></div>
+              <div><dt>Conductivity</dt><dd id="sample-conductivity">—</dd></div>
+            </dl>
+            <p id="sample-alert" class="sample-alert" hidden>
+              <span>!</span> Conductivity exceeds the route baseline
+            </p>
+          </section>
+
+          <footer class="attribution">
+            Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
+          </footer>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
