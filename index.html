@@ -13,7 +13,8 @@
   <body>
     <div id="app" class="app-shell" data-active-scenario="walk">
       <header class="topbar">
-        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-mark-v2.svg" alt="" /><span>senStep</span></a>
+        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-sole-black.svg" alt="" /><span>senStep</span></a>
+        <span id="device-live" class="device-live" hidden><i aria-hidden="true"></i>SS-0427</span>
         <nav class="scenario-tabs" aria-label="Choose map scenario">
           <button class="scenario-tab is-active" type="button" data-scenario="walk" aria-pressed="true">
             Walk
@@ -23,6 +24,44 @@
           </button>
         </nav>
       </header>
+
+      <section id="device-gate" class="device-gate" role="dialog" aria-modal="true" aria-labelledby="device-title">
+        <div class="device-card">
+          <div class="device-brand" aria-hidden="true">
+            <img src="/src/assets/senstep-sole-black.svg" alt="" />
+            <span>senStep</span>
+          </div>
+
+          <div id="device-idle" class="device-state">
+            <p class="device-kicker">Field sensor</p>
+            <h2 id="device-title">Connect your shoe sensor</h2>
+            <p>Pair senStep before entering the survey. The demo will use the Stangalar field location.</p>
+            <button id="connect-device" class="device-action" type="button">Connect device</button>
+          </div>
+
+          <div id="device-connecting" class="device-state" hidden aria-live="polite">
+            <span class="connection-spinner" aria-hidden="true"></span>
+            <h2>Finding senStep</h2>
+            <p>Checking sensor, location and time…</p>
+          </div>
+
+          <div id="device-connected" class="device-state" hidden aria-live="polite">
+            <div class="connection-heading">
+              <div>
+                <p class="device-kicker">Device connected</p>
+                <h2>Ready for the first step</h2>
+              </div>
+              <span class="connected-check" aria-label="Connected">✓</span>
+            </div>
+            <dl class="device-metadata">
+              <div><dt>Geolocation</dt><dd>48.4023° N, 4.4455° W<small>Vallon du Stangalar</small></dd></div>
+              <div><dt>Timestamp</dt><dd><time id="device-timestamp">—</time></dd></div>
+              <div><dt>Sensor ID</dt><dd>SSTEP-BR-0427</dd></div>
+            </dl>
+            <button id="start-measuring" class="device-action is-ready" type="button">Start measuring</button>
+          </div>
+        </div>
+      </section>
 
       <main class="workspace">
         <section class="map-stage" aria-labelledby="scene-title">

@@ -1,7 +1,29 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function connectAndStart(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Connect device' }).click();
+  await expect(page.getByRole('heading', { name: 'Finding senStep' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start measuring' })).toBeVisible({ timeout: 3_000 });
+  await page.getByRole('button', { name: 'Start measuring' }).click();
+  await expect(page.locator('#device-gate')).toBeHidden();
+}
+
+test('connects the senStep sensor before measurement', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Connect device' })).toBeVisible();
+  await page.getByRole('button', { name: 'Connect device' }).click();
+  await expect(page.getByRole('heading', { name: 'Finding senStep' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start measuring' })).toBeVisible({ timeout: 3_000 });
+  await expect(page.getByText('48.4023° N, 4.4455° W')).toBeVisible();
+  await expect(page.getByText('SSTEP-BR-0427')).toBeVisible();
+  await expect(page.locator('#device-timestamp')).not.toHaveText('—');
+  await page.getByRole('button', { name: 'Start measuring' }).click();
+  await expect(page.locator('#device-live')).toContainText('SS-0427');
+});
 
 test('opens on the Brest conductivity walk', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await expect(page).toHaveTitle(/senStep/);
   await expect(page.getByRole('heading', { name: 'Vallon du Stangalar' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Conductivity', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -13,6 +35,7 @@ test('opens on the Brest conductivity walk', async ({ page }) => {
 
 test('opens the anomalous step details', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await page.getByRole('button', { name: /Shared hotspot across three paths/ }).click();
   await expect(page.getByRole('heading', { name: /Step/ })).toBeVisible();
   await expect(page.getByText('1.12 dS/m')).toBeVisible();
@@ -21,6 +44,7 @@ test('opens the anomalous step details', async ({ page }) => {
 
 test('switches to the farm and advances the timeline', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await page.getByRole('button', { name: 'Farm' }).click();
   await expect(page.getByRole('heading', { name: 'Quarterly field survey' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Humidity' })).toHaveAttribute('aria-pressed', 'true');
@@ -33,6 +57,7 @@ test('switches to the farm and advances the timeline', async ({ page }) => {
 
 test('updates farm trend units with the active layer', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await page.getByRole('button', { name: 'Farm' }).click();
   await page.getByRole('button', { name: 'Weather' }).click();
   await expect(page.getByText('Average temperature')).toBeVisible();
@@ -42,6 +67,7 @@ test('updates farm trend units with the active layer', async ({ page }) => {
 
 test('shows living-lab calibration conditions for the farm', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await page.getByRole('button', { name: 'Farm' }).click();
   await expect(page.getByRole('heading', { name: 'NEMESIS-calibrated parameters' })).toBeVisible();
   await expect(page.getByText('Within range')).toBeVisible();
@@ -52,6 +78,7 @@ test('shows living-lab calibration conditions for the farm', async ({ page }) =>
 
 test('flags the out-of-range farm humidity zone', async ({ page }) => {
   await page.goto('/');
+  await connectAndStart(page);
   await page.getByRole('button', { name: 'Farm' }).click();
   await page.locator('#timeline').fill('4');
   await expect(page.getByText('September 2025')).toBeVisible();

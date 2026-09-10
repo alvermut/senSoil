@@ -82,6 +82,7 @@ let currentSurveyIndex = 0;
 let selectedId: string | null = null;
 let activeAnomaly: Measurement | null = null;
 let playbackTimer: number | undefined;
+let deviceConnectionTimer: number | undefined;
 let transitionSequence = 0;
 
 function closeRing(coordinates: [number, number][]): [number, number][] {
@@ -316,9 +317,10 @@ function setRoute(points: Measurement[]): void {
 }
 
 function fitScene(duration = 0): void {
-  if (routeSource.getFeatures().length === 0) return;
+  const fittedSource = routeSource.getFeatures().length > 0 ? routeSource : sampleSource;
+  if (fittedSource.getFeatures().length === 0) return;
   map.updateSize();
-  const extent = routeSource.getExtent();
+  const extent = fittedSource.getExtent();
   if (!extent) return;
   const desktop = window.matchMedia('(min-width: 900px)').matches;
   const padding = desktop ? [150, 150, 150, 150] : [96, 22, 118, 22];
@@ -616,6 +618,38 @@ element<HTMLButtonElement>('#anomaly-summary').addEventListener('click', () => {
 });
 anomalyElement.querySelector('button')?.addEventListener('click', () => {
   if (activeAnomaly) openMeasurement(activeAnomaly);
+});
+
+element<HTMLButtonElement>('#connect-device').addEventListener('click', () => {
+  element('#device-idle').hidden = true;
+  element('#device-connecting').hidden = false;
+  element<HTMLButtonElement>('#connect-device').disabled = true;
+  window.clearTimeout(deviceConnectionTimer);
+  deviceConnectionTimer = window.setTimeout(() => {
+    const connectedAt = new Date();
+    const timestamp = element<HTMLTimeElement>('#device-timestamp');
+    timestamp.dateTime = connectedAt.toISOString();
+    timestamp.textContent = new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(connectedAt);
+    element('#device-connecting').hidden = true;
+    element('#device-connected').hidden = false;
+    element<HTMLButtonElement>('#start-measuring').focus();
+  }, reducedMotion.matches ? 150 : 1_800);
+});
+
+element<HTMLButtonElement>('#start-measuring').addEventListener('click', () => {
+  element('#device-gate').hidden = true;
+  element('#device-live').hidden = false;
+  window.setTimeout(() => {
+    map.updateSize();
+    fitScene(240);
+  }, 0);
 });
 
 element<HTMLButtonElement>('#play-timeline').addEventListener('click', () => {

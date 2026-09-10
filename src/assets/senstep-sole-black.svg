@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" role="img" aria-label="senStep shoe-sole and plant mark">
+  <g fill="none" stroke="#081719" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="4.5" d="M19 5c12-4 25 2 30 13 5 12 4 28 2 41-1 10 1 18 4 25 2 5-1 8-6 8H16c-5 0-8-4-6-9 4-9 6-18 4-29C11 35 8 18 19 5Z"/>
+    <path stroke-width="3" d="M17 22h31M14 35h38M14 49h37M15 63h37M13 77h41"/>
+    <path stroke-width="2.7" d="M32 72V43m0 8-8-8m8 17 9-9"/>
+    <circle cx="24" cy="43" r="3.6" stroke-width="2.7"/>
+    <circle cx="41" cy="51" r="3.6" stroke-width="2.7"/>
+    <circle cx="32" cy="66" r="3.6" stroke-width="2.7"/>
+  </g>
+  <path fill="#081719" d="M31 35c-9-1-14-6-15-14 9 0 15 5 15 14Zm3 0c1-10 7-17 17-19-1 11-7 17-17 19Z"/>
+</svg>

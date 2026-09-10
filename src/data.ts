@@ -169,14 +169,12 @@ export function createFarmSurveys(): FarmSurvey[] {
     const random = mulberry32(8_400 + surveyIndex * 137);
     const points: Measurement[] = [];
 
-    for (let row = 0; row < 10; row += 1) {
-      for (let column = 0; column < 12; column += 1) {
-        const traversalColumn = row % 2 === 0 ? column : 11 - column;
-        const u = (traversalColumn + 0.5) / 12;
-        const v = (row + 0.5) / 10;
+    for (let sampleIndex = 0; sampleIndex < 120; sampleIndex += 1) {
+        const u = 0.055 + random() * 0.89;
+        const v = 0.055 + random() * 0.89;
         const coordinate = farmCoordinate(u, v, surveyIndex, random);
         const isRecoveryZone = u > 0.61 && v > 0.51;
-        const isFarmAnomaly = surveyIndex >= FARM_ANOMALY_ONSET_INDEX && u > 0.78 && v > 0.72;
+        const isFarmAnomaly = surveyIndex >= FARM_ANOMALY_ONSET_INDEX && u > 0.72 && v > 0.68;
         const spatialWave = Math.sin(u * 8.2 + v * 3.1) * 1.4;
         const moistureBase = isRecoveryZone ? recoveringZone[surveyIndex] : generalMoisture[surveyIndex];
         const moisture = isFarmAnomaly
@@ -186,6 +184,7 @@ export function createFarmSurveys(): FarmSurvey[] {
         points.push({
           id: `farm-${surveyIndex}-${points.length + 1}`,
           index: points.length,
+          trackId: `farm-point-${points.length + 1}`,
           coordinate,
           temperature: Number(clamp(seasonalTemperature[surveyIndex] + (v - 0.5) * 2.2 + (random() - 0.5) * 1.2, 11, 31).toFixed(1)),
           moisture,
@@ -194,7 +193,6 @@ export function createFarmSurveys(): FarmSurvey[] {
             ? { metric: 'moisture' as const, reason: 'above-calibrated-range' as const }
             : undefined,
         });
-      }
     }
 
     return {
