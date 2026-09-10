@@ -3,8 +3,8 @@ export type MetricKey = 'temperature' | 'moisture' | 'conductivity';
 export type Coordinate = [number, number];
 
 export interface Anomaly {
-  metric: 'conductivity';
-  reason: 'above-route-baseline';
+  metric: 'moisture' | 'conductivity';
+  reason: 'above-route-baseline' | 'above-calibrated-range';
 }
 
 export interface Measurement {
@@ -27,7 +27,7 @@ export interface FarmSurvey {
     relativeHumidity: number;
     referenceConductivity: number;
     soilState: string;
-    status: 'Within range';
+    status: 'Within range' | 'Outside range';
   };
 }
 

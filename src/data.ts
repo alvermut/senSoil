@@ -162,16 +162,23 @@ export function createFarmSurveys(): FarmSurvey[] {
         const v = (row + 0.5) / 10;
         const coordinate = farmCoordinate(u, v, surveyIndex, random);
         const isRecoveryZone = u > 0.61 && v > 0.51;
+        const isFarmAnomaly = surveyIndex === 0 && u > 0.78 && v > 0.72;
         const spatialWave = Math.sin(u * 8.2 + v * 3.1) * 1.4;
         const moistureBase = isRecoveryZone ? recoveringZone[surveyIndex] : generalMoisture[surveyIndex];
+        const moisture = isFarmAnomaly
+          ? Number((41.8 + (u - 0.7) * 7 + (v - 0.62) * 4).toFixed(1))
+          : Number(clamp(moistureBase + spatialWave + (random() - 0.5) * 2.4, 9, 34).toFixed(1));
 
         points.push({
           id: `farm-${surveyIndex}-${points.length + 1}`,
           index: points.length,
           coordinate,
           temperature: Number(clamp(seasonalTemperature[surveyIndex] + (v - 0.5) * 2.2 + (random() - 0.5) * 1.2, 11, 31).toFixed(1)),
-          moisture: Number(clamp(moistureBase + spatialWave + (random() - 0.5) * 2.4, 9, 34).toFixed(1)),
+          moisture,
           conductivity: Number(clamp(0.54 + u * 0.17 + Math.sin(v * 5 + surveyIndex * 0.2) * 0.06 + (random() - 0.5) * 0.05, 0.33, 0.94).toFixed(2)),
+          anomaly: isFarmAnomaly
+            ? { metric: 'moisture' as const, reason: 'above-calibrated-range' as const }
+            : undefined,
         });
       }
     }
@@ -186,7 +193,7 @@ export function createFarmSurveys(): FarmSurvey[] {
         relativeHumidity: calibrationHumidity[surveyIndex],
         referenceConductivity: 1.41,
         soilState: calibrationSoilState[surveyIndex],
-        status: 'Within range',
+        status: points.some((point) => point.anomaly) ? 'Outside range' : 'Within range',
       },
     };
   });

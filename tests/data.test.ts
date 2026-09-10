@@ -42,7 +42,16 @@ describe('Valencia farm data', () => {
     expect(surveys.at(-1)?.date).toBe('2026-09-01');
     expect(surveys.every((survey) => survey.points.length === 120)).toBe(true);
     expect(surveys.every((survey) => survey.calibration.referenceConductivity === 1.41)).toBe(true);
-    expect(surveys.every((survey) => survey.calibration.status === 'Within range')).toBe(true);
+    expect(surveys[0].calibration.status).toBe('Outside range');
+    expect(surveys.slice(1).every((survey) => survey.calibration.status === 'Within range')).toBe(true);
+  });
+
+  it('marks one localized humidity zone outside the calibrated range', () => {
+    const anomalies = surveys[0].points.filter((point) => point.anomaly);
+    expect(anomalies.length).toBeGreaterThan(3);
+    expect(anomalies.every((point) => point.anomaly?.metric === 'moisture')).toBe(true);
+    expect(anomalies.every((point) => point.moisture > 36)).toBe(true);
+    expect(surveys.slice(1).every((survey) => survey.points.every((point) => !point.anomaly))).toBe(true);
   });
 
   it('uses different sampling positions for each visit', () => {

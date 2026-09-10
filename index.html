@@ -13,7 +13,7 @@
   <body>
     <div id="app" class="app-shell" data-active-scenario="walk">
       <header class="topbar">
-        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-mark.png" alt="" /><span>senStep</span></a>
+        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-mark-v2.svg" alt="" /><span>senStep</span></a>
         <nav class="scenario-tabs" aria-label="Choose map scenario">
           <button class="scenario-tab is-active" type="button" data-scenario="walk" aria-pressed="true">
             Walk
@@ -44,7 +44,7 @@
           </div>
 
           <div id="anomaly-marker" class="anomaly-marker">
-            <button type="button" aria-label="Inspect conductivity anomaly">!</button>
+            <button type="button" aria-label="Inspect out-of-range anomaly">!</button>
           </div>
 
           <div class="layer-console">
@@ -120,9 +120,9 @@
               <div class="calibration-heading">
                 <div>
                   <p>Living-lab calibration</p>
-                  <h2 id="calibration-title">NEMESIS-inspired field protocol</h2>
+                  <h2 id="calibration-title">NEMESIS-calibrated parameters</h2>
                 </div>
-                <span id="calibration-status"><i aria-hidden="true"></i>Within range</span>
+                <span id="calibration-status" class="is-alert"><i aria-hidden="true"></i><span id="calibration-status-label">Outside range</span></span>
               </div>
               <dl class="calibration-values">
                 <div><dt>Ambient</dt><dd id="calibration-ambient">Clear and dry, 24.6 °C</dd></div>
@@ -130,7 +130,7 @@
                 <div><dt>EC reference</dt><dd id="calibration-conductivity">1.41 dS/m</dd></div>
                 <div><dt>Soil state</dt><dd id="calibration-soil">Dry surface</dd></div>
               </dl>
-              <small>Illustrative calibration conditions; no project affiliation.</small>
+              <small>Illustrative NEMESIS-calibrated parameters for this product demo.</small>
             </section>
           </section>
 
@@ -145,7 +145,7 @@
               <div><dt>Conductivity</dt><dd id="sample-conductivity">—</dd></div>
             </dl>
             <p id="sample-alert" class="sample-alert" hidden>
-              <span>!</span> Conductivity exceeds the route baseline
+              <span>!</span><span id="sample-alert-text">Conductivity exceeds the route baseline</span>
             </p>
           </section>
 

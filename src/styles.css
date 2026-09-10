@@ -743,6 +743,15 @@ button {
   font-weight: 600;
 }
 
+#calibration-status.is-alert {
+  color: #a5342b;
+}
+
+#calibration-status.is-alert i {
+  background: var(--alert);
+  box-shadow: 0 0 0 3px rgba(217, 67, 54, 0.14);
+}
+
 #calibration-status i {
   width: 7px;
   height: 7px;

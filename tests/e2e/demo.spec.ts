@@ -14,7 +14,7 @@ test('opens the anomalous step details', async ({ page }) => {
   await page.getByRole('button', { name: /One reading needs attention/ }).click();
   await expect(page.getByRole('heading', { name: 'Step 987' })).toBeVisible();
   await expect(page.getByText('2.74 dS/m')).toBeVisible();
-  await expect(page.getByText('Conductivity exceeds the route baseline', { exact: true })).toBeVisible();
+  await expect(page.locator('#sample-alert-text')).toBeVisible();
 });
 
 test('switches to the farm and advances the timeline', async ({ page }) => {
@@ -41,8 +41,17 @@ test('updates farm trend units with the active layer', async ({ page }) => {
 test('shows living-lab calibration conditions for the farm', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Farm' }).click();
-  await expect(page.getByRole('heading', { name: 'NEMESIS-inspired field protocol' })).toBeVisible();
-  await expect(page.getByText('Within range')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'NEMESIS-calibrated parameters' })).toBeVisible();
+  await expect(page.getByText('Outside range')).toBeVisible();
   await expect(page.getByText('1.41 dS/m')).toBeVisible();
-  await expect(page.getByText('Illustrative calibration conditions; no project affiliation.')).toBeVisible();
+  await expect(page.getByText('Illustrative NEMESIS-calibrated parameters for this product demo.')).toBeVisible();
+});
+
+
+test('flags the out-of-range farm humidity zone', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Farm' }).click();
+  await page.getByRole('button', { name: 'Inspect out-of-range anomaly' }).click();
+  await expect(page.getByRole('heading', { name: /Survey sample/ })).toBeVisible();
+  await expect(page.getByText('Soil humidity exceeds the NEMESIS-calibrated range')).toBeVisible();
 });

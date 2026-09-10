@@ -80,6 +80,7 @@ let scenario: ScenarioKey = 'walk';
 let activeMetric: MetricKey = 'conductivity';
 let currentSurveyIndex = 0;
 let selectedId: string | null = null;
+let activeAnomaly: Measurement | null = null;
 let playbackTimer: number | undefined;
 let transitionSequence = 0;
 
@@ -168,8 +169,9 @@ const sampleStyleCache = new globalThis.Map<string, Style>();
 function sampleStyle(feature: FeatureLike): Style {
   const measurement = feature.get('measurement') as Measurement;
   const selected = measurement.id === selectedId;
+  const anomaly = Boolean(measurement.anomaly);
   const color = metricColor(measurement);
-  const key = `${scenario}-${color}-${selected ? 'selected' : 'normal'}`;
+  const key = `${scenario}-${color}-${selected ? 'selected' : anomaly ? 'anomaly' : 'normal'}`;
   const existing = sampleStyleCache.get(key);
   if (existing) return existing;
 
@@ -177,9 +179,12 @@ function sampleStyle(feature: FeatureLike): Style {
     image: new CircleStyle({
       radius: selected ? 7 : scenario === 'walk' ? 2.55 : 4.1,
       fill: new Fill({ color }),
-      stroke: new Stroke({ color: selected ? '#20343b' : 'rgba(243,248,247,.74)', width: selected ? 2.2 : 0.65 }),
+      stroke: new Stroke({
+        color: selected ? '#20343b' : anomaly ? '#d94336' : 'rgba(243,248,247,.74)',
+        width: selected ? 2.2 : anomaly ? 1.4 : 0.65,
+      }),
     }),
-    zIndex: selected ? 50 : 10,
+    zIndex: selected ? 50 : anomaly ? 30 : 10,
   });
   sampleStyleCache.set(key, style);
   return style;
@@ -270,6 +275,23 @@ function populateGeometry(geometry: SceneGeometry): void {
 function setMeasurements(points: Measurement[]): void {
   sampleSource.clear();
   sampleSource.addFeatures(points.map(featureFromMeasurement));
+}
+
+function setAnomaly(points: Measurement[]): void {
+  const anomalies = points.filter((point) => point.anomaly);
+  activeAnomaly = anomalies[0] ?? null;
+  if (!activeAnomaly) {
+    anomalyOverlay.setPosition(undefined);
+    anomalyElement.hidden = true;
+    return;
+  }
+
+  const coordinate: [number, number] = [
+    anomalies.reduce((sum, point) => sum + point.coordinate[0], 0) / anomalies.length,
+    anomalies.reduce((sum, point) => sum + point.coordinate[1], 0) / anomalies.length,
+  ];
+  anomalyOverlay.setPosition(fromLonLat(coordinate));
+  anomalyElement.hidden = false;
 }
 
 function setRoute(points: Measurement[]): void {
@@ -392,7 +414,8 @@ function updateTrend(): void {
   element('#calibration-humidity').textContent = `${calibration.relativeHumidity}% RH`;
   element('#calibration-conductivity').textContent = `${calibration.referenceConductivity.toFixed(2)} dS/m`;
   element('#calibration-soil').textContent = calibration.soilState;
-  element('#calibration-status').lastChild!.textContent = calibration.status;
+  element('#calibration-status-label').textContent = calibration.status;
+  element('#calibration-status').classList.toggle('is-alert', calibration.status === 'Outside range');
   updateModeCaption();
 }
 
@@ -407,6 +430,12 @@ function openMeasurement(measurement: Measurement): void {
   element('#sample-moisture').textContent = formatMeasurement(measurement.moisture, 'moisture');
   element('#sample-conductivity').textContent = formatMeasurement(measurement.conductivity, 'conductivity');
   element('#sample-alert').hidden = !measurement.anomaly;
+  if (measurement.anomaly) {
+    const label = metricMeta[measurement.anomaly.metric].label;
+    element('#sample-alert-text').textContent = measurement.anomaly.reason === 'above-calibrated-range'
+      ? `${label} exceeds the NEMESIS-calibrated range`
+      : `${label} exceeds the route baseline`;
+  }
   element('#sample-sheet').hidden = false;
 }
 
@@ -440,6 +469,9 @@ async function setFarmSurvey(index: number, crossfade = false): Promise<void> {
   const sequence = ++transitionSequence;
   const safeIndex = Math.max(0, Math.min(farmSurveys.length - 1, index));
   closeMeasurement();
+  activeAnomaly = null;
+  anomalyOverlay.setPosition(undefined);
+  anomalyElement.hidden = true;
 
   if (crossfade) {
     await Promise.all([fadeLayerTo(sampleLayer, 0, 135), fadeLayerTo(routeLayer, 0, 135)]);
@@ -450,6 +482,7 @@ async function setFarmSurvey(index: number, crossfade = false): Promise<void> {
   const survey = farmSurveys[currentSurveyIndex];
   setMeasurements(survey.points);
   setRoute(survey.points);
+  setAnomaly(survey.points);
   element<HTMLInputElement>('#timeline').value = String(currentSurveyIndex);
   element<HTMLInputElement>('#timeline').setAttribute('aria-valuetext', survey.label);
   updateTrend();
@@ -518,7 +551,8 @@ function renderScene(nextScenario: ScenarioKey): void {
     const finish = new Feature(new Point(fromLonLat(brestRoute[brestRoute.length - 1])));
     finish.set('endpoint', 'finish');
     labelSource.addFeatures([start, finish]);
-    anomalyOverlay.setPosition(fromLonLat(walkMeasurements[WALK_ANOMALY_INDEX].coordinate));
+    activeAnomaly = walkMeasurements[WALK_ANOMALY_INDEX];
+    anomalyOverlay.setPosition(fromLonLat(activeAnomaly.coordinate));
     anomalyElement.hidden = false;
     element('#scene-place').textContent = 'Brest, France';
     element('#scene-title').textContent = 'Stangalar soil loop';
@@ -526,8 +560,6 @@ function renderScene(nextScenario: ScenarioKey): void {
     element('#farm-panel').hidden = true;
   } else {
     void setFarmSurvey(0);
-    anomalyOverlay.setPosition(undefined);
-    anomalyElement.hidden = true;
     element('#scene-place').textContent = 'L’Horta Nord, Valencia';
     element('#scene-title').textContent = 'Quarterly field survey';
     element('#walk-panel').hidden = true;
@@ -574,7 +606,9 @@ element<HTMLButtonElement>('#zoom-out').addEventListener('click', () => view.ani
 element<HTMLButtonElement>('#reset-map').addEventListener('click', resetMapView);
 element<HTMLButtonElement>('#close-sheet').addEventListener('click', closeMeasurement);
 element<HTMLButtonElement>('#anomaly-summary').addEventListener('click', () => openMeasurement(walkMeasurements[WALK_ANOMALY_INDEX]));
-anomalyElement.querySelector('button')?.addEventListener('click', () => openMeasurement(walkMeasurements[WALK_ANOMALY_INDEX]));
+anomalyElement.querySelector('button')?.addEventListener('click', () => {
+  if (activeAnomaly) openMeasurement(activeAnomaly);
+});
 
 element<HTMLButtonElement>('#play-timeline').addEventListener('click', () => {
   if (playbackTimer === undefined) void startPlayback();
