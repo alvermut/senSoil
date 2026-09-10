@@ -470,6 +470,19 @@ button {
   line-height: 1.25;
 }
 
+.survey-date-line {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.01em;
+}
+
+.survey-date-line time {
+  margin-left: 5px;
+  color: var(--ink);
+  font-weight: 650;
+}
+
 .route-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -696,6 +709,32 @@ button {
   width: 1px;
   height: 7px;
   background: var(--contour);
+}
+
+.timeline-anomaly-onset {
+  position: absolute;
+  z-index: 3;
+  top: -7px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.timeline-anomaly-onset i {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--alert);
+  color: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--alert) 70%, transparent);
+  font-size: 0.57rem;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .timeline-ends {

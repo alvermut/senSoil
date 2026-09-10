@@ -30,7 +30,7 @@
 
           <div class="scene-heading">
             <p id="scene-place" class="scene-place">Brest, France</p>
-            <h1 id="scene-title">Stangalar soil loop</h1>
+            <h1 id="scene-title">Vallon du Stangalar</h1>
           </div>
 
           <div class="map-actions" aria-label="Map controls">
@@ -67,27 +67,28 @@
 
         <aside class="inspector" aria-label="Survey information">
           <section id="walk-panel" class="scenario-panel">
+            <p class="survey-date-line">Survey date <time id="walk-date" datetime="2026-09-10">10 September 2026</time></p>
             <div class="route-pair">
               <div>
                 <span class="route-dot start"></span>
-                <p>Start</p>
-                <strong>Botanical conservatory</strong>
+                <p>Survey area</p>
+                <strong>Vallon du Stangalar</strong>
               </div>
               <span class="route-connector" aria-hidden="true"></span>
               <div>
                 <span class="route-dot finish"></span>
-                <p>Finish</p>
-                <strong>Botanical conservatory</strong>
+                <p>Traversals</p>
+                <strong>3 park paths</strong>
               </div>
             </div>
             <dl class="route-stats">
-              <div><dt>Distance</dt><dd>1.46 km</dd></div>
-              <div><dt>Elapsed</dt><dd>23 min</dd></div>
+              <div><dt>Distance</dt><dd>1.79 km</dd></div>
+              <div><dt>Elapsed</dt><dd>29 min</dd></div>
               <div><dt>Samples</dt><dd>1,482</dd></div>
             </dl>
             <button id="anomaly-summary" class="anomaly-summary" type="button">
               <span class="alert-sign">!</span>
-              <span><strong>One reading needs attention</strong><small>Conductivity exceeds the route baseline</small></span>
+              <span><strong>Shared hotspot across three paths</strong><small>Repeated signal suggests compacted soil</small></span>
             </button>
           </section>
 
@@ -112,6 +113,7 @@
               <div class="timeline-track">
                 <input id="timeline" type="range" min="0" max="8" step="1" value="0" aria-label="Farm survey date" />
                 <div id="timeline-ticks" class="timeline-ticks" aria-hidden="true"></div>
+                <span id="farm-anomaly-onset" class="timeline-anomaly-onset" title="Anomaly begins September 2025" hidden><i>!</i></span>
                 <div class="timeline-ends"><span>Sep ’24</span><span>Sep ’26</span></div>
               </div>
             </div>
@@ -122,7 +124,7 @@
                   <p>Living-lab calibration</p>
                   <h2 id="calibration-title">NEMESIS-calibrated parameters</h2>
                 </div>
-                <span id="calibration-status" class="is-alert"><i aria-hidden="true"></i><span id="calibration-status-label">Outside range</span></span>
+                <span id="calibration-status"><i aria-hidden="true"></i><span id="calibration-status-label">Within range</span></span>
               </div>
               <dl class="calibration-values">
                 <div><dt>Ambient</dt><dd id="calibration-ambient">Clear and dry, 24.6 °C</dd></div>

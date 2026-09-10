@@ -21,9 +21,9 @@ import type { FeatureLike } from 'ol/Feature.js';
 import type { Geometry } from 'ol/geom.js';
 
 import {
-  WALK_ANOMALY_INDEX,
+  FARM_ANOMALY_ONSET_INDEX,
   brestGeometry,
-  brestRoute,
+  brestRoutes,
   createFarmSurveys,
   createWalkMeasurements,
   farmGeometry,
@@ -297,8 +297,9 @@ function setAnomaly(points: Measurement[]): void {
 function setRoute(points: Measurement[]): void {
   routeSource.clear();
   routeStyleCache.clear();
-  const segments = points.slice(0, -1).map((point, index) => {
+  const segments = points.slice(0, -1).flatMap((point, index) => {
     const next = points[index + 1];
+    if (point.trackId !== next.trackId) return [];
     const feature = new Feature(new LineString([
       fromLonLat(point.coordinate),
       fromLonLat(next.coordinate),
@@ -309,7 +310,7 @@ function setRoute(points: Measurement[]): void {
       moisture: (point.moisture + next.moisture) / 2,
       conductivity: (point.conductivity + next.conductivity) / 2,
     } satisfies Measurement);
-    return feature;
+    return [feature];
   });
   routeSource.addFeatures(segments);
 }
@@ -416,6 +417,7 @@ function updateTrend(): void {
   element('#calibration-soil').textContent = calibration.soilState;
   element('#calibration-status-label').textContent = calibration.status;
   element('#calibration-status').classList.toggle('is-alert', calibration.status === 'Outside range');
+  element('#farm-anomaly-onset').hidden = currentSurveyIndex < FARM_ANOMALY_ONSET_INDEX;
   updateModeCaption();
 }
 
@@ -432,9 +434,11 @@ function openMeasurement(measurement: Measurement): void {
   element('#sample-alert').hidden = !measurement.anomaly;
   if (measurement.anomaly) {
     const label = metricMeta[measurement.anomaly.metric].label;
-    element('#sample-alert-text').textContent = measurement.anomaly.reason === 'above-calibrated-range'
-      ? `${label} exceeds the NEMESIS-calibrated range`
-      : `${label} exceeds the route baseline`;
+    element('#sample-alert-text').textContent = measurement.anomaly.reason === 'possible-compaction'
+      ? 'Repeated conductivity signal suggests compacted soil'
+      : measurement.anomaly.reason === 'above-calibrated-range'
+        ? `${label} exceeds the NEMESIS-calibrated range`
+        : `${label} exceeds the route baseline`;
   }
   element('#sample-sheet').hidden = false;
 }
@@ -546,16 +550,17 @@ function renderScene(nextScenario: ScenarioKey): void {
   if (scenario === 'walk') {
     setMeasurements(walkMeasurements);
     setRoute(walkMeasurements);
-    const start = new Feature(new Point(fromLonLat(brestRoute[0])));
-    start.set('endpoint', 'start');
-    const finish = new Feature(new Point(fromLonLat(brestRoute[brestRoute.length - 1])));
-    finish.set('endpoint', 'finish');
-    labelSource.addFeatures([start, finish]);
-    activeAnomaly = walkMeasurements[WALK_ANOMALY_INDEX];
-    anomalyOverlay.setPosition(fromLonLat(activeAnomaly.coordinate));
-    anomalyElement.hidden = false;
+    const endpoints = brestRoutes.flatMap((route) => {
+      const start = new Feature(new Point(fromLonLat(route[0])));
+      start.set('endpoint', 'start');
+      const finish = new Feature(new Point(fromLonLat(route[route.length - 1])));
+      finish.set('endpoint', 'finish');
+      return [start, finish];
+    });
+    labelSource.addFeatures(endpoints);
+    setAnomaly(walkMeasurements);
     element('#scene-place').textContent = 'Brest, France';
-    element('#scene-title').textContent = 'Stangalar soil loop';
+    element('#scene-title').textContent = 'Vallon du Stangalar';
     element('#walk-panel').hidden = false;
     element('#farm-panel').hidden = true;
   } else {
@@ -605,7 +610,10 @@ element<HTMLButtonElement>('#zoom-in').addEventListener('click', () => view.anim
 element<HTMLButtonElement>('#zoom-out').addEventListener('click', () => view.animate({ zoom: (view.getZoom() ?? 15) - 1, duration: reducedMotion.matches ? 0 : 180 }));
 element<HTMLButtonElement>('#reset-map').addEventListener('click', resetMapView);
 element<HTMLButtonElement>('#close-sheet').addEventListener('click', closeMeasurement);
-element<HTMLButtonElement>('#anomaly-summary').addEventListener('click', () => openMeasurement(walkMeasurements[WALK_ANOMALY_INDEX]));
+element<HTMLButtonElement>('#anomaly-summary').addEventListener('click', () => {
+  const anomaly = walkMeasurements.find((measurement) => measurement.anomaly);
+  if (anomaly) openMeasurement(anomaly);
+});
 anomalyElement.querySelector('button')?.addEventListener('click', () => {
   if (activeAnomaly) openMeasurement(activeAnomaly);
 });
@@ -622,6 +630,15 @@ element<HTMLInputElement>('#timeline').addEventListener('input', (event) => {
 
 const ticks = element('#timeline-ticks');
 for (let index = 0; index < farmSurveys.length; index += 1) ticks.append(document.createElement('i'));
+
+const today = new Date();
+const walkDate = element<HTMLTimeElement>('#walk-date');
+walkDate.dateTime = today.toISOString().slice(0, 10);
+walkDate.textContent = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(today);
 
 let resizeTimer: number | undefined;
 window.addEventListener('resize', () => {

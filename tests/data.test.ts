@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  WALK_ANOMALY_INDEX,
+  FARM_ANOMALY_ONSET_INDEX,
   WALK_SAMPLE_COUNT,
-  brestRoute,
+  brestRoutes,
   createFarmSurveys,
   createWalkMeasurements,
   metricAverage,
@@ -13,16 +13,18 @@ describe('Brest walk data', () => {
   it('creates one measurement for each of the 1,482 steps', () => {
     const points = createWalkMeasurements();
     expect(points).toHaveLength(WALK_SAMPLE_COUNT);
-    expect(points[0].coordinate).toEqual(brestRoute[0]);
-    expect(points.at(-1)?.coordinate).toEqual(brestRoute.at(-1));
+    expect(new Set(points.map((point) => point.trackId))).toEqual(new Set(['path-1', 'path-2', 'path-3']));
+    expect(brestRoutes).toHaveLength(3);
   });
 
-  it('contains exactly one conductivity anomaly', () => {
+  it('marks the same compaction hotspot on all three paths', () => {
     const points = createWalkMeasurements();
     const anomalies = points.filter((point) => point.anomaly);
-    expect(anomalies).toHaveLength(1);
-    expect(anomalies[0].index).toBe(WALK_ANOMALY_INDEX);
-    expect(anomalies[0].conductivity).toBe(2.74);
+    expect(anomalies).toHaveLength(3);
+    expect(new Set(anomalies.map((point) => point.trackId)).size).toBe(3);
+    expect(new Set(anomalies.map((point) => point.coordinate.join(','))).size).toBe(1);
+    expect(anomalies.every((point) => point.anomaly?.reason === 'possible-compaction')).toBe(true);
+    expect(anomalies.every((point) => point.conductivity === 1.12)).toBe(true);
   });
 
   it('keeps ordinary readings inside the intended demo ranges', () => {
@@ -42,16 +44,17 @@ describe('Valencia farm data', () => {
     expect(surveys.at(-1)?.date).toBe('2026-09-01');
     expect(surveys.every((survey) => survey.points.length === 120)).toBe(true);
     expect(surveys.every((survey) => survey.calibration.referenceConductivity === 1.41)).toBe(true);
-    expect(surveys[0].calibration.status).toBe('Outside range');
-    expect(surveys.slice(1).every((survey) => survey.calibration.status === 'Within range')).toBe(true);
+    expect(surveys.slice(0, FARM_ANOMALY_ONSET_INDEX).every((survey) => survey.calibration.status === 'Within range')).toBe(true);
+    expect(surveys.slice(FARM_ANOMALY_ONSET_INDEX).every((survey) => survey.calibration.status === 'Outside range')).toBe(true);
   });
 
   it('marks one localized humidity zone outside the calibrated range', () => {
-    const anomalies = surveys[0].points.filter((point) => point.anomaly);
+    const anomalies = surveys[FARM_ANOMALY_ONSET_INDEX].points.filter((point) => point.anomaly);
     expect(anomalies.length).toBeGreaterThan(3);
     expect(anomalies.every((point) => point.anomaly?.metric === 'moisture')).toBe(true);
     expect(anomalies.every((point) => point.moisture > 36)).toBe(true);
-    expect(surveys.slice(1).every((survey) => survey.points.every((point) => !point.anomaly))).toBe(true);
+    expect(surveys.slice(0, FARM_ANOMALY_ONSET_INDEX).every((survey) => survey.points.every((point) => !point.anomaly))).toBe(true);
+    expect(surveys.slice(FARM_ANOMALY_ONSET_INDEX).every((survey) => survey.points.some((point) => point.anomaly))).toBe(true);
   });
 
   it('uses different sampling positions for each visit', () => {

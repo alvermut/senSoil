@@ -9,14 +9,15 @@ import type {
 import {
   stangalarMapLines,
   stangalarMapPolygons,
-  stangalarRoute,
   valenciaMapLines,
   valenciaMapPolygons,
 } from './osm-data';
+import { stangalarCompactionHotspot, stangalarSurveyRoutes } from './stangalar-survey-routes';
 
 export const WALK_SAMPLE_COUNT = 1_482;
-export const WALK_ANOMALY_INDEX = 986;
-export const brestRoute: Coordinate[] = stangalarRoute;
+export const FARM_ANOMALY_ONSET_INDEX = 4;
+export const brestRoutes: Coordinate[][] = stangalarSurveyRoutes;
+export const brestRoute: Coordinate[] = brestRoutes[0];
 
 export const brestGeometry: SceneGeometry = {
   center: [-4.4458, 48.4026],
@@ -100,24 +101,37 @@ function interpolateRoute(route: Coordinate[], count: number): Coordinate[] {
 
 export function createWalkMeasurements(): Measurement[] {
   const random = mulberry32(20_260_909);
-  return interpolateRoute(brestRoute, WALK_SAMPLE_COUNT).map((coordinate, index) => {
-    const progress = index / (WALK_SAMPLE_COUNT - 1);
-    const noise = random() - 0.5;
-    const anomaly = index === WALK_ANOMALY_INDEX
-      ? { metric: 'conductivity' as const, reason: 'above-route-baseline' as const }
-      : undefined;
+  let globalIndex = 0;
 
-    return {
-      id: `walk-${index + 1}`,
-      index,
-      coordinate,
-      temperature: Number(clamp(15.2 + 1.35 * Math.sin(progress * 7.4) + noise * 0.55, 13.8, 17.5).toFixed(1)),
-      moisture: Number(clamp(34 + 8.6 * Math.sin(progress * 9.2 + 0.8) + noise * 5.2, 22, 48).toFixed(1)),
-      conductivity: anomaly
-        ? 2.74
-        : Number(clamp(0.52 + 0.28 * Math.sin(progress * 13.1 - 0.4) + noise * 0.1, 0.18, 0.92).toFixed(2)),
-      anomaly,
-    };
+  return brestRoutes.flatMap((route, routeIndex) => {
+    const coordinates = interpolateRoute(route, WALK_SAMPLE_COUNT / brestRoutes.length);
+    const anomalyIndex = coordinates.reduce((closest, coordinate, index) => (
+      distanceWeight(coordinate, stangalarCompactionHotspot)
+        < distanceWeight(coordinates[closest], stangalarCompactionHotspot) ? index : closest
+    ), 0);
+
+    return coordinates.map((coordinate, localIndex) => {
+      const index = globalIndex;
+      globalIndex += 1;
+      const progress = localIndex / (coordinates.length - 1);
+      const noise = random() - 0.5;
+      const anomaly = localIndex === anomalyIndex
+        ? { metric: 'conductivity' as const, reason: 'possible-compaction' as const }
+        : undefined;
+
+      return {
+        id: `walk-${index + 1}`,
+        index,
+        trackId: `path-${routeIndex + 1}`,
+        coordinate: anomaly ? stangalarCompactionHotspot : coordinate,
+        temperature: Number(clamp(15.2 + 1.35 * Math.sin(progress * 7.4 + routeIndex * 0.4) + noise * 0.55, 13.8, 17.5).toFixed(1)),
+        moisture: Number(clamp(34 + 8.6 * Math.sin(progress * 9.2 + 0.8 + routeIndex * 0.6) + noise * 5.2, 22, 48).toFixed(1)),
+        conductivity: anomaly
+          ? 1.12
+          : Number(clamp(0.52 + 0.28 * Math.sin(progress * 13.1 - 0.4 + routeIndex * 0.5) + noise * 0.1, 0.18, 0.92).toFixed(2)),
+        anomaly,
+      };
+    });
   });
 }
 
@@ -162,7 +176,7 @@ export function createFarmSurveys(): FarmSurvey[] {
         const v = (row + 0.5) / 10;
         const coordinate = farmCoordinate(u, v, surveyIndex, random);
         const isRecoveryZone = u > 0.61 && v > 0.51;
-        const isFarmAnomaly = surveyIndex === 0 && u > 0.78 && v > 0.72;
+        const isFarmAnomaly = surveyIndex >= FARM_ANOMALY_ONSET_INDEX && u > 0.78 && v > 0.72;
         const spatialWave = Math.sin(u * 8.2 + v * 3.1) * 1.4;
         const moistureBase = isRecoveryZone ? recoveringZone[surveyIndex] : generalMoisture[surveyIndex];
         const moisture = isFarmAnomaly

@@ -4,12 +4,13 @@ export type Coordinate = [number, number];
 
 export interface Anomaly {
   metric: 'moisture' | 'conductivity';
-  reason: 'above-route-baseline' | 'above-calibrated-range';
+  reason: 'above-route-baseline' | 'above-calibrated-range' | 'possible-compaction';
 }
 
 export interface Measurement {
   id: string;
   index: number;
+  trackId?: string;
   coordinate: Coordinate;
   temperature: number;
   moisture: number;
