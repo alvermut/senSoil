@@ -14,16 +14,38 @@ test('connects the senStep sensor before measurement', async ({ page }) => {
   await page.getByRole('button', { name: 'Connect device' }).click();
   await expect(page.getByRole('heading', { name: 'Finding senStep' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Start measuring' })).toBeVisible({ timeout: 3_000 });
-  await expect(page.getByText('48.4023° N, 4.4455° W')).toBeVisible();
-  await expect(page.getByText('SSTEP-BR-0427')).toBeVisible();
+  const connectedPanel = page.locator('#device-connected');
+  await expect(connectedPanel.getByText('48.4023° N, 4.4455° W')).toBeVisible();
+  await expect(connectedPanel.getByText('SSTEP-BR-0427')).toBeVisible();
   await expect(page.locator('#device-timestamp')).not.toHaveText('—');
   await page.getByRole('button', { name: 'Start measuring' }).click();
   await expect(page.locator('#device-live')).toContainText('SS-0427');
+  await expect(page.getByRole('heading', { name: 'Take a field measurement' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Measure', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('takes measurements and accumulates the session log', async ({ page }) => {
+  await page.goto('/');
+  await connectAndStart(page);
+
+  await page.getByRole('button', { name: 'Take measurement' }).click();
+  await expect(page.getByRole('heading', { name: 'Stay still' })).toBeVisible();
+  await expect(page.getByText('Taking measurement. Keep your foot steady for 4 seconds.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Taking measurement' })).toBeDisabled();
+  await expect(page.getByRole('heading', { name: 'Datapoint taken' })).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator('#measurement-count')).toHaveText('1 datapoint');
+  await expect(page.locator('.measurement-log-item')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Take another measurement' }).click();
+  await expect(page.getByRole('heading', { name: 'Datapoint taken' })).toBeVisible({ timeout: 5_000 });
+  await expect(page.locator('#measurement-count')).toHaveText('2 datapoints');
+  await expect(page.locator('.measurement-log-item')).toHaveCount(2);
 });
 
 test('opens on the Brest conductivity walk', async ({ page }) => {
   await page.goto('/');
   await connectAndStart(page);
+  await page.getByRole('button', { name: 'Walk' }).click();
   await expect(page).toHaveTitle(/senStep/);
   await expect(page.getByRole('heading', { name: 'Vallon du Stangalar' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Conductivity', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -36,6 +58,7 @@ test('opens on the Brest conductivity walk', async ({ page }) => {
 test('opens the anomalous step details', async ({ page }) => {
   await page.goto('/');
   await connectAndStart(page);
+  await page.getByRole('button', { name: 'Walk' }).click();
   await page.getByRole('button', { name: /Shared hotspot across three paths/ }).click();
   await expect(page.getByRole('heading', { name: /Step/ })).toBeVisible();
   await expect(page.getByText('1.12 dS/m')).toBeVisible();

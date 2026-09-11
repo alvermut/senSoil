@@ -13,13 +13,16 @@
   <body>
     <div id="app" class="app-shell" data-active-scenario="walk">
       <header class="topbar">
-        <a class="wordmark" href="#" aria-label="senStep home"><img src="/src/assets/senstep-sole-black.svg" alt="" /><span>senStep</span></a>
+        <a class="wordmark" href="#" aria-label="SenStep home"><img src="/src/assets/senstep-logo.png" alt="SenStep" /></a>
         <span id="device-live" class="device-live" hidden><i aria-hidden="true"></i>SS-0427</span>
-        <nav class="scenario-tabs" aria-label="Choose map scenario">
-          <button class="scenario-tab is-active" type="button" data-scenario="walk" aria-pressed="true">
+        <nav class="scenario-tabs" aria-label="Choose app page">
+          <button id="measure-tab" class="scenario-tab" type="button" data-page="measure" aria-pressed="false">
+            Measure
+          </button>
+          <button class="scenario-tab is-active" type="button" data-page="walk" data-scenario="walk" aria-pressed="true">
             Walk
           </button>
-          <button class="scenario-tab" type="button" data-scenario="farm" aria-pressed="false">
+          <button class="scenario-tab" type="button" data-page="farm" data-scenario="farm" aria-pressed="false">
             Farm
           </button>
         </nav>
@@ -28,8 +31,7 @@
       <section id="device-gate" class="device-gate" role="dialog" aria-modal="true" aria-labelledby="device-title">
         <div class="device-card">
           <div class="device-brand" aria-hidden="true">
-            <img src="/src/assets/senstep-sole-black.svg" alt="" />
-            <span>senStep</span>
+            <img src="/src/assets/senstep-logo.png" alt="" />
           </div>
 
           <div id="device-idle" class="device-state">
@@ -63,7 +65,45 @@
         </div>
       </section>
 
-      <main class="workspace">
+      <main id="measure-view" class="measure-view" hidden>
+        <section class="measure-capture" aria-labelledby="measure-title">
+          <header class="measure-heading">
+            <div>
+              <p>Vallon du Stangalar</p>
+              <h1 id="measure-title">Take a field measurement</h1>
+            </div>
+            <span class="measure-sensor"><i aria-hidden="true"></i>SSTEP-BR-0427</span>
+          </header>
+
+          <div id="measurement-target" class="measurement-target" data-state="ready" aria-hidden="true">
+            <span class="measurement-ring"></span>
+            <img src="/src/assets/senstep-logo.png" alt="" />
+            <strong id="measurement-countdown">Ready</strong>
+          </div>
+
+          <div class="measurement-copy" aria-live="polite">
+            <h2 id="measurement-status">Ready to sample</h2>
+            <p id="measurement-message">Place your foot on stable soil, then take a measurement.</p>
+          </div>
+
+          <button id="take-measurement" class="take-measurement" type="button">Take measurement</button>
+          <p class="measure-location"><span aria-hidden="true">⌖</span> 48.4023° N, 4.4455° W</p>
+        </section>
+
+        <aside class="measurement-log" aria-labelledby="measurement-log-title">
+          <header>
+            <div>
+              <p>Current session</p>
+              <h2 id="measurement-log-title">Measurement log</h2>
+            </div>
+            <span id="measurement-count">0 points</span>
+          </header>
+          <p id="measurement-empty" class="measurement-empty">Completed datapoints will appear here.</p>
+          <ol id="measurement-log-list" aria-live="polite"></ol>
+        </aside>
+      </main>
+
+      <main id="survey-workspace" class="workspace">
         <section class="map-stage" aria-labelledby="scene-title">
           <div id="map" class="map" role="application" tabindex="0" aria-label="Interactive soil measurement map"></div>
 

@@ -83,7 +83,17 @@ let selectedId: string | null = null;
 let activeAnomaly: Measurement | null = null;
 let playbackTimer: number | undefined;
 let deviceConnectionTimer: number | undefined;
+let measurementTimer: number | undefined;
+let measurementCountdownTimer: number | undefined;
+let capturedMeasurementCount = 0;
 let transitionSequence = 0;
+
+const capturedReadings = [
+  { temperature: 15.1, moisture: 35.8, conductivity: 0.62, coordinate: '48.40231° N, 4.44550° W' },
+  { temperature: 15.0, moisture: 36.4, conductivity: 0.65, coordinate: '48.40234° N, 4.44547° W' },
+  { temperature: 14.9, moisture: 35.9, conductivity: 0.64, coordinate: '48.40237° N, 4.44543° W' },
+  { temperature: 15.2, moisture: 37.1, conductivity: 0.69, coordinate: '48.40239° N, 4.44539° W' },
+];
 
 function closeRing(coordinates: [number, number][]): [number, number][] {
   const first = coordinates[0];
@@ -538,9 +548,82 @@ function setMetric(metric: MetricKey): void {
   if (scenario === 'farm') updateTrend();
 }
 
+type AppPage = 'measure' | ScenarioKey;
+
+function setActivePage(page: AppPage): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-page]').forEach((button) => {
+    const isActive = button.dataset.page === page;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', String(isActive));
+  });
+}
+
+function showMeasurePage(): void {
+  stopPlayback();
+  closeMeasurement();
+  element('#measure-view').hidden = false;
+  element('#survey-workspace').hidden = true;
+  setActivePage('measure');
+}
+
+function completeMeasurement(): void {
+  window.clearInterval(measurementCountdownTimer);
+  const reading = capturedReadings[capturedMeasurementCount % capturedReadings.length];
+  capturedMeasurementCount += 1;
+  const capturedAt = new Date();
+
+  const item = document.createElement('li');
+  item.className = 'measurement-log-item';
+  item.innerHTML = `
+    <span class="measurement-log-index">${String(capturedMeasurementCount).padStart(2, '0')}</span>
+    <span class="measurement-log-reading">
+      <strong>${reading.moisture.toFixed(1)}% · ${reading.conductivity.toFixed(2)} dS/m · ${reading.temperature.toFixed(1)} °C</strong>
+      <small>${reading.coordinate}</small>
+    </span>
+    <time class="measurement-log-time" datetime="${capturedAt.toISOString()}">${new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(capturedAt)}</time>`;
+  element<HTMLOListElement>('#measurement-log-list').prepend(item);
+
+  element('#measurement-empty').hidden = true;
+  element('#measurement-count').textContent = `${capturedMeasurementCount} ${capturedMeasurementCount === 1 ? 'datapoint' : 'datapoints'}`;
+  element('#measurement-status').textContent = 'Datapoint taken';
+  element('#measurement-message').textContent = 'Saved to this session with location and timestamp.';
+  element('#measurement-countdown').textContent = 'Saved';
+  element('#measurement-target').dataset.state = 'complete';
+  const button = element<HTMLButtonElement>('#take-measurement');
+  button.disabled = false;
+  button.textContent = 'Take another measurement';
+  button.classList.add('is-complete');
+}
+
+function takeMeasurement(): void {
+  const button = element<HTMLButtonElement>('#take-measurement');
+  button.disabled = true;
+  button.textContent = 'Taking measurement';
+  button.classList.remove('is-complete');
+  element('#measurement-status').textContent = 'Stay still';
+  element('#measurement-message').textContent = 'Taking measurement. Keep your foot steady for 4 seconds.';
+  element('#measurement-target').dataset.state = 'taking';
+
+  let secondsRemaining = 4;
+  element('#measurement-countdown').textContent = `${secondsRemaining} s`;
+  window.clearInterval(measurementCountdownTimer);
+  window.clearTimeout(measurementTimer);
+  measurementCountdownTimer = window.setInterval(() => {
+    secondsRemaining = Math.max(1, secondsRemaining - 1);
+    element('#measurement-countdown').textContent = `${secondsRemaining} s`;
+  }, 1_000);
+  measurementTimer = window.setTimeout(completeMeasurement, 4_000);
+}
+
 function renderScene(nextScenario: ScenarioKey): void {
   stopPlayback();
   closeMeasurement();
+  element('#measure-view').hidden = true;
+  element('#survey-workspace').hidden = false;
   scenario = nextScenario;
   element('#app').dataset.activeScenario = scenario;
   activeMetric = scenario === 'walk' ? 'conductivity' : 'moisture';
@@ -573,12 +656,7 @@ function renderScene(nextScenario: ScenarioKey): void {
     element('#farm-panel').hidden = false;
   }
 
-  document.querySelectorAll<HTMLButtonElement>('[data-scenario]').forEach((button) => {
-    const isActive = button.dataset.scenario === scenario;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', String(isActive));
-  });
-
+  setActivePage(scenario);
   updateLegend();
   window.setTimeout(() => fitScene(0), 0);
 }
@@ -599,6 +677,8 @@ map.on('pointermove', (event) => {
   });
   map.getTargetElement().style.cursor = hit ? 'pointer' : '';
 });
+
+element<HTMLButtonElement>('#measure-tab').addEventListener('click', showMeasurePage);
 
 document.querySelectorAll<HTMLButtonElement>('[data-scenario]').forEach((button) => {
   button.addEventListener('click', () => renderScene(button.dataset.scenario as ScenarioKey));
@@ -646,11 +726,10 @@ element<HTMLButtonElement>('#connect-device').addEventListener('click', () => {
 element<HTMLButtonElement>('#start-measuring').addEventListener('click', () => {
   element('#device-gate').hidden = true;
   element('#device-live').hidden = false;
-  window.setTimeout(() => {
-    map.updateSize();
-    fitScene(240);
-  }, 0);
+  showMeasurePage();
 });
+
+element<HTMLButtonElement>('#take-measurement').addEventListener('click', takeMeasurement);
 
 element<HTMLButtonElement>('#play-timeline').addEventListener('click', () => {
   if (playbackTimer === undefined) void startPlayback();
